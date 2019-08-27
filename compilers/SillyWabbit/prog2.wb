@@ -32,6 +32,22 @@ func main() int {
    tooth fairy will double the amount given for each subsequent tooth.
    Which is a better deal?  A child typically has 20 baby teeth.  */
 
+const tooth_value_increase = 2.0;
+const total_teeth = 20;
+
+func tooth_fairy() int {
+   var tooth_value float = 0.01;
+   var tooth int = 1;
+   var total_value float = 0.0;
+   while tooth < total_teeth {
+       print tooth_value;
+       total_value = total_value + tooth_value;
+       tooth_value = tooth_value * tooth_value_increase;
+       tooth = tooth + 1;
+   }
+   print total_value;
+   return 0;
+}
 
 
 
