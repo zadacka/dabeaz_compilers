@@ -16,3 +16,16 @@ of table-driven approach.  It's not the most sophisticated thing, but
 it will work as a starting point.  You can come back and refactor the
 type system later.
 '''
+
+INT = 'int'
+FLOAT = 'float'
+CHAR = 'char'
+BOOL = 'bool'
+
+# Capabilities of operations (simple and straightforward)
+binary_ops = {
+    (INT, '+', INT): INT,
+    (INT, '-', INT): INT,
+    (INT, '<', INT): BOOL,
+    (INT, '>', INT): BOOL,
+}

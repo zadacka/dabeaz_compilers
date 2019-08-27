@@ -27,6 +27,7 @@ from compilers.wabbit.model import *
 # Encode:   float_expr    -> 2.0 + 3.0 * 4.0
 #
 # This one is given to you as an example.
+from compilers.wabbit.typesys import INT
 
 int_expr = BinaryOperator('+',
                           Integer(2),
@@ -104,8 +105,8 @@ program2 = [
 #
 
 program3 = [
-    Variable('a', Integer(2), int),
-    Variable('b', Integer(3), int),
+    Variable('a', Integer(2), INT),
+    Variable('b', Integer(3), INT),
     If(
         BinaryOperator('<', Primitive('a'), Primitive('b')),
         [Print(Primitive('a')), ],
@@ -129,8 +130,8 @@ program3 = [
 
 program4 = [
     Constant('n', Integer(10)),
-    Variable('x', Integer(10), int),
-    Variable('fact', Integer(1), int),
+    Variable('x', Integer(10), INT),
+    Variable('fact', Integer(1), INT),
 
     While(
         BinaryOperator('<', Primitive('x'), Primitive('n')),
@@ -164,8 +165,8 @@ program4 = [
 
 program5 = [
     Function('square',
-             [FunctionParemeter('x', int)],
-             int,
+             [FunctionParemeter('x', INT)],
+             INT,
              [Return(BinaryOperator('*', Primitive('x'), Primitive('x'))), ]
              ),
     Print(FunctionCall('square', [4, ])),
@@ -189,11 +190,11 @@ program5 = [
 
 program6 = [
     Function('fact',
-             [FunctionParemeter('n', int), ],
-             int,
+             [FunctionParemeter('n', INT), ],
+             INT,
              [
-                 Variable('x', 1, int),
-                 Variable('result', 1, int),
+                 Variable('x', 1, INT),
+                 Variable('result', 1, INT),
                  While(
                      BinaryOperator('<', Primitive('x'), Primitive('n')),
                      [Assignment(Primitive('x'),
