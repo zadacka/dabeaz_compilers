@@ -18,7 +18,7 @@
 # parts of the project.  Plan to have a lot of discussion.
 #
 
-from wabbit.model import *
+from compilers.wabbit.model import *
 
 # ----------------------------------------------------------------------
 # Simple Expressions:
@@ -28,11 +28,12 @@ from wabbit.model import *
 #
 # This one is given to you as an example.
 
-int_expr = BinOp('+', Integer(2), 
-                      BinOp('*', Integer(3), Integer(4)))
+int_expr = BinaryOperator('+',
+                          Integer(2),
+                          BinaryOperator('*', Integer(3), Integer(4)))
 
-float_expr = BinOp('+', Float(2.0), 
-                      BinOp('*', Float(3.0), Float(4.0)))
+float_expr = BinaryOperator('+', Float(2.0),
+                            BinaryOperator('*', Float(3.0), Float(4.0)))
 
 # ----------------------------------------------------------------------
 # Program 1: Printing
@@ -43,7 +44,30 @@ float_expr = BinOp('+', Float(2.0),
 #    print 2.0 - 3.0 / -4.0;
 #
 
-program1 = [ ]
+program1 = [
+    Print(
+        BinaryOperator(
+            '+',
+            Integer(2),
+            BinaryOperator(
+                '*',
+                Integer(3),
+                UnaryOperator('-', Integer(4))
+            )
+        )
+    ),
+    Print(
+        BinaryOperator(
+            '-',
+            Float(2.0),
+            BinaryOperator(
+                '/',
+                Float(3.0),
+                UnaryOperator('-', Float(4.0))
+            )
+        )
+    )
+]
 
 # ----------------------------------------------------------------------
 # Program 2: Variable and constant declarations. 
@@ -54,9 +78,17 @@ program1 = [ ]
 #    const pi = 3.14159;
 #    var tau float;
 #    tau = 2.0 * pi;
-#    print(tau);
+#    print(tau);  # TODO: check if this should just be print (no brackets)
 
-program2 = [ ]
+program2 = [
+    Constant('pi', 3.14159),
+    Variable('tau', None, float),
+    Assignment(
+        Primitive('tau'),
+        BinaryOperator('*', Float(2.0), Primitive('pi'))
+    ),
+    Print(Primitive('tau'))
+]
 
 # ----------------------------------------------------------------------
 # Program 3: Conditionals.  This program prints out the minimum of
@@ -71,7 +103,15 @@ program2 = [ ]
 #    }
 #
 
-program3 = [ ] 
+program3 = [
+    Variable('a', Integer(2), int),
+    Variable('b', Integer(3), int),
+    If(
+        BinaryOperator('<', Primitive('a'), Primitive('b')),
+        [Print(Primitive('a')), ],
+        [Print(Primitive('b')), ],
+    )
+]
 
 # ----------------------------------------------------------------------
 # Program 4: Loops.  This program prints out the first 10 factorials.
@@ -87,7 +127,29 @@ program3 = [ ]
 #    }
 #
 
-program4 = [ ] 
+program4 = [
+    Constant('n', Integer(10)),
+    Variable('x', Integer(10), int),
+    Variable('fact', Integer(1), int),
+
+    While(
+        BinaryOperator('<', Primitive('x'), Primitive('n')),
+        [
+            Assignment(Primitive('fact'), BinaryOperator(
+                '*',
+                Primitive('fact'),
+                Primitive('x')
+            )),
+            Print(Primitive('fact')),
+            Assignment(Primitive('x'),
+                       BinaryOperator('+',
+                                      Primitive('x'),
+                                      Integer(1)
+                                      )
+                       )
+        ]
+    )
+]
 
 # ----------------------------------------------------------------------
 # Program 5: Functions (simple)
@@ -100,7 +162,15 @@ program4 = [ ]
 #    print square(10);
 #
 
-program5 = [ ]
+program5 = [
+    Function('square',
+             [FunctionParemeter('x', int)],
+             int,
+             [Return(BinaryOperator('*', Primitive('x'), Primitive('x'))), ]
+             ),
+    Print(FunctionCall('square', [4, ])),
+    Print(FunctionCall('square', [10, ])),
+]
 
 # ----------------------------------------------------------------------
 # Program 6: Functions (complex)
@@ -117,5 +187,22 @@ program5 = [ ]
 #
 #    print(fact(10))
 
-program6 = [ ]
-
+program6 = [
+    Function('fact',
+             [FunctionParemeter('n', int), ],
+             int,
+             [
+                 Variable('x', 1, int),
+                 Variable('result', 1, int),
+                 While(
+                     BinaryOperator('<', Primitive('x'), Primitive('n')),
+                     [Assignment(Primitive('x'),
+                                BinaryOperator('+',
+                                               Primitive('x'),
+                                               Integer(1))), ]
+                 ),
+                 Return(Primitive('result'))
+             ],
+             ),
+    Print(FunctionCall('fact', [Integer(10)]))
+]

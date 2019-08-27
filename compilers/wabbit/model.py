@@ -41,12 +41,19 @@
 # Wabbit programs consist of statements.  Statements are related to
 # things like assignment, I/O (printing), control-flow, and other operations.
 #
-# 1.1 Assignment
-#
-#     location = expression ;
-#
+
+# TODO: inherit from this so we can see what things are expressions and validate
+# accordingly
+
+# TODO: Think: Statements, Expressions, Locations, Definitions
+class Expression:
+    pass
 
 class Assignment:
+    """
+    # 1.1 Assignment
+    #     location = expression ;
+    """
     def __init__(self, location, expression):
         self.location = location
         self.expression = expression
@@ -54,30 +61,82 @@ class Assignment:
     def __repr__(self):
         return f'Assignment({self.location}, {self.expression})'
 
-#
-# 1.2 Printing
-#
-#     print expression ;
-#
-# 1.3 Conditional
-#
-#     if test { consequence} else { alternative }
-#
-# 1.4 While Loop
-#
-#  while test { body }
-#
-# 1.5 Break and Continue
-#
-#   while test {
-#       ...
-#       break;   // continue
-#   }
-#
-# 1.6 Return a value
-#
-#  return expression ; 
-#
+    def __str__(self):
+        return f'{self.location} = {self.expression};'
+
+
+class Print:
+    """
+    # 1.2 Printing
+    #     print expression ;
+    """
+    def __init__(self, expression):
+        self.expression = expression
+
+    def __str__(self):
+        return f'print {self.expression};'
+
+class If:
+    """
+    # 1.3 Conditional
+    #     if test { consequence} else { alternative }
+    """
+    def __init__(self, test, consequence, alternative):
+        self.test = test
+        self.consequence = consequence
+        self.alternative = alternative
+
+    def __str__(self):
+        consequences = '\n  '.join([str(c) for c in self.consequence])
+
+        alternatives = ""
+        if self.alternative is not None:
+            alternatives = ' else {\n  ' + '\n  '.join([str(a) for a in self.alternative]) + '\n}'
+
+        return f"if {self.test} {{\n  {consequences}\n}}{alternatives} "
+
+
+class While:
+    """
+    # 1.4 While Loop
+    #  while test { body }
+    """
+    def __init__(self, test, body):
+        self.test = test
+        self.consequence = body
+
+    def __str__(self):
+        consequences = '\n  '.join([str(c) for c in self.consequence])
+        return f"while {self.test} {{\n  {consequences}\n}}"
+
+
+class Break:
+    """
+    # 1.5 Break and Continue
+    #   while test {
+    #       ...
+    #       break;   // continue
+    #   }
+    """
+    pass
+
+
+class Continue:
+    """ DB has this, but I didn't think it would be necessary ... think further """
+    pass
+
+
+class Return():
+    """
+    # 1.6 Return a value
+    #  return expression ;
+    """
+
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return f"return {self.value};"
 
 # ----------------------------------------------------------------------
 # Part 2. Definitions/Declarations
@@ -87,34 +146,83 @@ class Assignment:
 # are defined within an environment that forms a so-called "scope."  
 # For example, global scope or local scope. 
 #
-# 2.1 Variables.  Variables can be declared in a few different forms.
-#
-#    const name = value;
-#    const name [type] = value;
-#    var name type [= value];
-#    var name [type] = value;
-#
-# Constants are immutable.  If a value is present, the type can be
-# ommitted and inferred from the type of the value.
-#
-# 2.2 Function definitions.
-#
-#    func name(parameters) return_type { statements }
-#
-# An external functions can be imported from using the special statement:
-#
-#    import func name(parameters) return_type;
-#
-#
-# 2.3 Function Parameters
-#
-#       func square(x int) int { return x*x; }
-#
-# A function parameter (e.g., "x int") is a special kind of
-# variable. It has a name and type like a variable, but it is declared
-# as part of the function definition itself, not as a separate "var"
-# declaration.
 
+
+class Variable:
+    """
+    # 2.1 Variables.  Variables can be declared in a few different forms.
+    #    const name = value;
+    #    const name [type] = value;
+    #    var name type [= value];
+    #    var name [type] = value;
+    # Constants are immutable.  If a value is present, the type can be
+    # ommitted and inferred from the type of the value.
+    """
+    def __init__(self, name, value=None, optional_type=None):
+        self._type_specified = optional_type is not None
+        self._value_specified = value is not None
+        assert self._type_specified or self._value_specified
+        self.name = name
+        self.type = optional_type.__name__ if self._type_specified else type(value).__name__
+        self.optional_value = value
+
+    def __str__(self):
+        optional_type = f" {self.type}" if self._type_specified else ""
+        optional_value = f" = {self.optional_value}" if self._value_specified else ""
+        return f"variable {self.name}{optional_type}{optional_value};"
+
+
+class Constant:
+    def __init__(self, name, value, optional_type=None):
+        self._type_specified = optional_type is not None
+        self.name = name
+        self.type = optional_type.__name__ if self._type_specified else type(value).__name__
+        self.value = value
+
+    def __str__(self):
+        optional_type = f" {type(self.type).__name__}" if self._type_specified else ""
+        return f"const {self.name}{optional_type} = {self.value};"
+
+
+class Function:
+    """
+    # 2.2 Function definitions.
+    #    func name(parameters) return_type { statements }
+    # An external functions can be imported from using the special statement:
+    #    import func name(parameters) return_type;
+    """
+    def __init__(self, name, parameters, return_type, statements):
+        self.name = name
+        self.parameters = parameters
+        self.return_type = return_type
+        self.statements = statements
+
+    def __str__(self):
+        parameters = ', '.join([str(p) for p in self.parameters])
+        statements = '\n  '.join([str(s) for s in self.statements])
+        return f"""\
+{self.name} ({parameters}) {self.return_type} {{
+  {statements}
+}}"""
+
+
+class FunctionParemeter:
+    """
+    # 2.3 Function Parameters
+    #
+    #       func square(x int) int { return x*x; }
+    #
+    # A function parameter (e.g., "x int") is a special kind of
+    # variable. It has a name and type like a variable, but it is declared
+    # as part of the function definition itself, not as a separate "var"
+    # declaration.
+    """
+    def __init__(self, name, type):
+        self.name = name
+        self.type = type
+
+    def __str__(self):
+        return f"{self.name} {self.type}"
 # ----------------------------------------------------------------------
 # Part 3: Expressions.
 #
@@ -123,41 +231,120 @@ class Assignment:
 # Wabbit defines the following expressions and operators
 #
 # 3.1 Literals
-#        23            (Integer literal)
-#        4.5           (Float literal)
-#        true,false    (Bool literal)
-#        'c'           (Character literal - A single character)
+
+
 #
-# 3.2 Binary Operators
-#        left + right        (Addition)
-#        left - right        (Subtraction)
-#        left * right        (Multiplication)
-#        left / right        (Division)
-#        left < right        (Less than)
-#        left <= right       (Less than or equal)
-#        left > right        (Greater than)
-#        left >= right       (Greater than or equal)
-#        left == right       (Equal to)
-#        left != right       (Not equal)
-#        left && right       (Logical and)
-#        left || right       (Logical or)
-#
-# 3.3 Unary Operators
-#        +operand       (Positive)
-#        -operand       (Negation)
-#        !operand       (logical not)
-#        ^operand       (Grow memory)
-#
-# 3.4 Reading from a location  (see below)
-#        location       
-#
-# 3.5 Type-casts
-#         int(expr)  
-#         float(expr)
-#
-# 3.6 Function/Procedure Call
-#        func(arg1, arg2, ..., argn)
-#  
+class Integer:
+    """
+    #        23            (Integer literal)
+    """
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return f"{self.value}"
+
+
+class Float:
+    """
+    #        4.5           (Float literal)
+    """
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return f"{self.value}"
+
+class Bool:
+    """
+    #        true,false    (Bool literal)
+    """
+    def __init__(self, value):
+        self.value = value
+
+
+class Char:
+    """
+    #        'c'           (Character literal - A single character)
+    """
+    def __init__(self, value):
+        self.value = value
+
+
+class BinaryOperator:
+    """
+    # 3.2 Binary Operators
+    #        left + right        (Addition)
+    #        left - right        (Subtraction)
+    #        left * right        (Multiplication)
+    #        left / right        (Division)
+    #        left < right        (Less than)
+    #        left <= right       (Less than or equal)
+    #        left > right        (Greater than)
+    #        left >= right       (Greater than or equal)
+    #        left == right       (Equal to)
+    #        left != right       (Not equal)
+    #        left && right       (Logical and)
+    #        left || right       (Logical or)
+    """
+    def __init__(self, operator, left, right):
+        self.operator = operator
+        self.left = left
+        self.right = right
+
+    def __str__(self):
+        return f"{self.left} {self.operator} {self.right}"
+
+
+class UnaryOperator:
+    """
+    # 3.3 Unary Operators
+    #        +operand       (Positive)
+    #        -operand       (Negation)
+    #        !operand       (logical not)
+    #        ^operand       (Grow memory)
+    """
+    def __init__(self, operator, operand):
+        self.operator = operator
+        self.operand = operand
+
+    def __str__(self):
+        return f"{self.operator}{self.operand}"
+
+
+class Fetch:
+    """
+    # 3.4 Reading from a location  (see below)
+    #        location
+    """
+    def __init__(self, location):
+        self.location = location
+
+
+class TypeCast:
+    """
+    # 3.5 Type-casts
+    #         int(expr)
+    #         float(expr)
+    """
+    def __init__(self, target_type, value):
+        self.target_type = target_type
+        self.value = value
+
+    def __str__(self):
+        return f"{self.target_type}({self.value})"
+
+class FunctionCall:
+    """
+    # 3.6 Function/Procedure Call
+    #        func(arg1, arg2, ..., argn)
+    """
+    def __init__(self, function_name, args):
+        self.function_name = function_name
+        self.args = args
+
+    def __str__(self):
+        return f"{self.function_name}({' ,'.join([str(a) for a in self.args])})"
 
 # ----------------------------------------------------------------------
 # Part 4 : Locations
@@ -182,21 +369,39 @@ class Assignment:
 #
 # Wabbit has two types of locations:
 #
-# 4.1 Primitive.  A bare variable name such as "abc"
-#
-#       abc = 123;
-#       print abc;
-#
-#     Any name used must refer to an existing definition of
-#     a variable.  For example, "abc" in this example must have
-#     a corresponding declaration such as 
-#
-#           var abc int;
-#
-# 4.2 Memory Addresses. An integer prefixed by backtick (`)
-#
-#       `address = 123;          
-#       print `address + 10; 
+
+
+class Primitive:
+    """
+    # 4.1 Primitive.  A bare variable name such as "abc"
+    #
+    #       abc = 123;
+    #       print abc;
+    #
+    #     Any name used must refer to an existing definition of
+    #     a variable.  For example, "abc" in this example must have
+    #     a corresponding declaration such as
+    #
+    #           var abc int;
+    """
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return self.name
+
+class MemoryAddress:
+    """
+    # 4.2 Memory Addresses. An integer prefixed by backtick (`)
+    #
+    #       `address = 123;
+    #       print `address + 10;
+    """
+    def __init__(self, address):
+        self.address = address
+
+    def __str__(self):
+        return f"`{self.address}"
 #
 # Note: Historically, understanding the nature of locations has been
 # one of the most difficult parts of the compiler project.  Expect
