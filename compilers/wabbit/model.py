@@ -46,6 +46,9 @@
 # accordingly
 
 # TODO: Think: Statements, Expressions, Locations, Definitions
+import builtins
+
+
 class Expression:
     pass
 
@@ -158,30 +161,31 @@ class Variable:
     # Constants are immutable.  If a value is present, the type can be
     # ommitted and inferred from the type of the value.
     """
-    def __init__(self, name, value=None, optional_type=None):
-        self._type_specified = optional_type is not None
+    def __init__(self, name, value=None, type=None):
+        assert value or type
+        self._type_specified = type is not None
         self._value_specified = value is not None
-        assert self._type_specified or self._value_specified
+
         self.name = name
-        self.type = optional_type.__name__ if self._type_specified else type(value).__name__
-        self.optional_value = value
-
-    def __str__(self):
-        optional_type = f" {self.type}" if self._type_specified else ""
-        optional_value = f" = {self.optional_value}" if self._value_specified else ""
-        return f"variable {self.name}{optional_type}{optional_value};"
-
-
-class Constant:
-    def __init__(self, name, value, optional_type=None):
-        self._type_specified = optional_type is not None
-        self.name = name
-        self.type = optional_type.__name__ if self._type_specified else type(value).__name__
+        self.type = type if self._type_specified else builtins.type(value).__name__
         self.value = value
 
     def __str__(self):
-        optional_type = f" {type(self.type).__name__}" if self._type_specified else ""
-        return f"const {self.name}{optional_type} = {self.value};"
+        type = f" {self.type}" if self._type_specified else ""
+        value = f" = {self.value}" if self._value_specified else ""
+        return f"variable {self.name}{type}{value};"
+
+
+class Constant:
+    def __init__(self, name, value, type=None):
+        self._type_specified = type is not None
+        self.name = name
+        self.type = type if self._type_specified else builtins.type(value).__name__
+        self.value = value
+
+    def __str__(self):
+        type = f" {self.type}" if self._type_specified else ""
+        return f"const {self.name}{type} = {self.value};"
 
 
 class Function:
