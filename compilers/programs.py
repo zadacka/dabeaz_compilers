@@ -27,7 +27,6 @@ from compilers.wabbit.model import *
 # Encode:   float_expr    -> 2.0 + 3.0 * 4.0
 #
 # This one is given to you as an example.
-from compilers.wabbit.typesys import INT
 
 int_expr = BinaryOperator('+',
                           Integer(2),
@@ -83,7 +82,7 @@ program1 = [
 
 program2 = [
     Constant('pi', 3.14159),
-    Variable('tau', None, float),
+    Variable('tau', None, Float.name),
     Assignment(
         Primitive('tau'),
         BinaryOperator('*', Float(2.0), Primitive('pi'))
@@ -105,8 +104,8 @@ program2 = [
 #
 
 program3 = [
-    Variable('a', Integer(2), INT),
-    Variable('b', Integer(3), INT),
+    Variable('a', Integer(2), Integer.name),
+    Variable('b', Integer(3), Integer.name),
     If(
         BinaryOperator('<', Primitive('a'), Primitive('b')),
         [Print(Primitive('a')), ],
@@ -130,8 +129,8 @@ program3 = [
 
 program4 = [
     Constant('n', Integer(10)),
-    Variable('x', Integer(10), INT),
-    Variable('fact', Integer(1), INT),
+    Variable('x', Integer(10), Integer.name),
+    Variable('fact', Integer(1), Integer.name),
 
     While(
         BinaryOperator('<', Primitive('x'), Primitive('n')),
@@ -165,8 +164,8 @@ program4 = [
 
 program5 = [
     Function('square',
-             [FunctionParemeter('x', INT)],
-             INT,
+             [FunctionParameter('x', Integer.name)],
+             Integer.name,
              [Return(BinaryOperator('*', Primitive('x'), Primitive('x'))), ]
              ),
     Print(FunctionCall('square', [4, ])),
@@ -190,11 +189,11 @@ program5 = [
 
 program6 = [
     Function('fact',
-             [FunctionParemeter('n', INT), ],
-             INT,
+             [FunctionParameter('n', Integer.name), ],
+             Integer.name,
              [
-                 Variable('x', 1, INT),
-                 Variable('result', 1, INT),
+                 Variable('x', 1, Integer.name),
+                 Variable('result', 1, Integer.name),
                  While(
                      BinaryOperator('<', Primitive('x'), Primitive('n')),
                      [Assignment(Primitive('x'),

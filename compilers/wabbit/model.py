@@ -43,14 +43,12 @@
 #
 
 # TODO: inherit from this so we can see what things are expressions and validate
-# accordingly
-
-# TODO: Think: Statements, Expressions, Locations, Definitions
+#  Statements,
+#  Expressions,
+#  Locations,
+#  Definitions
 import builtins
 
-
-class Expression:
-    pass
 
 class Assignment:
     """
@@ -79,23 +77,20 @@ class Print:
     def __str__(self):
         return f'print {self.expression};'
 
+
 class If:
     """
     # 1.3 Conditional
     #     if test { consequence} else { alternative }
     """
-    def __init__(self, test, consequence, alternative):
+    def __init__(self, test, consequence, alternative=None):
         self.test = test
         self.consequence = consequence
         self.alternative = alternative
 
     def __str__(self):
         consequences = '\n  '.join([str(c) for c in self.consequence])
-
-        alternatives = ""
-        if self.alternative is not None:
-            alternatives = ' else {\n  ' + '\n  '.join([str(a) for a in self.alternative]) + '\n}'
-
+        alternatives = "" if self.alternative is None else ' else {\n  ' + '\n  '.join([str(a) for a in self.alternative]) + '\n}'
         return f"if {self.test} {{\n  {consequences}\n}}{alternatives} "
 
 
@@ -129,12 +124,11 @@ class Continue:
     pass
 
 
-class Return():
+class Return:
     """
     # 1.6 Return a value
     #  return expression ;
     """
-
     def __init__(self, value):
         self.value = value
 
@@ -163,29 +157,31 @@ class Variable:
     """
     def __init__(self, name, value=None, type=None):
         assert value or type
+        assert type is None or type in KNOWN_TYPES
         self._type_specified = type is not None
         self._value_specified = value is not None
 
         self.name = name
-        self.type = type if self._type_specified else builtins.type(value).__name__
+        self.type = type
         self.value = value
 
     def __str__(self):
-        type = f" {self.type}" if self._type_specified else ""
-        value = f" = {self.value}" if self._value_specified else ""
-        return f"variable {self.name}{type}{value};"
+        optional_type_fragment = f" {self.type}" if self._type_specified else ""
+        optional_value_fragment = f" = {self.value}" if self._value_specified else ""
+        return f"variable {self.name}{optional_type_fragment}{optional_value_fragment};"
 
 
 class Constant:
     def __init__(self, name, value, type=None):
+        assert type is None or type in KNOWN_TYPES
         self._type_specified = type is not None
         self.name = name
-        self.type = type if self._type_specified else builtins.type(value).__name__
+        self.type = type
         self.value = value
 
     def __str__(self):
-        type = f" {self.type}" if self._type_specified else ""
-        return f"const {self.name}{type} = {self.value};"
+        optional_type_fragment = f" {self.type}" if self._type_specified else ""
+        return f"const {self.name}{optional_type_fragment} = {self.value};"
 
 
 class Function:
@@ -200,6 +196,7 @@ class Function:
         self.parameters = parameters
         self.return_type = return_type
         self.statements = statements
+        assert statements, f'Function {self.name} contains no statements, should contain at least one.'
 
     def __str__(self):
         parameters = ', '.join([str(p) for p in self.parameters])
@@ -210,7 +207,7 @@ class Function:
 }}"""
 
 
-class FunctionParemeter:
+class FunctionParameter:
     """
     # 2.3 Function Parameters
     #
@@ -224,6 +221,7 @@ class FunctionParemeter:
     def __init__(self, name, type):
         self.name = name
         self.type = type
+        assert type in KNOWN_TYPES
 
     def __str__(self):
         return f"{self.name} {self.type}"
@@ -242,6 +240,8 @@ class Integer:
     """
     #        23            (Integer literal)
     """
+    name = 'int'
+
     def __init__(self, value):
         self.value = value
 
@@ -253,17 +253,23 @@ class Float:
     """
     #        4.5           (Float literal)
     """
+    name = 'float'
+
     def __init__(self, value):
         self.value = value
 
     def __str__(self):
         return f"{self.value}"
 
+
 class Bool:
     """
     #        true,false    (Bool literal)
     """
+    name = 'bool'
+
     def __init__(self, value):
+        assert value in {'true', 'false'}
         self.value = value
 
 
@@ -271,8 +277,13 @@ class Char:
     """
     #        'c'           (Character literal - A single character)
     """
+    name = 'char'
+
     def __init__(self, value):
         self.value = value
+
+
+KNOWN_TYPES = {Integer.name, Float.name, Bool.name, Char.name}
 
 
 class BinaryOperator:
@@ -332,11 +343,13 @@ class TypeCast:
     #         float(expr)
     """
     def __init__(self, target_type, value):
+        assert self.target_type in KNOWN_TYPES
         self.target_type = target_type
         self.value = value
 
     def __str__(self):
         return f"{self.target_type}({self.value})"
+
 
 class FunctionCall:
     """

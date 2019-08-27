@@ -17,15 +17,17 @@ it will work as a starting point.  You can come back and refactor the
 type system later.
 '''
 
-INT = 'int'
-FLOAT = 'float'
-CHAR = 'char'
-BOOL = 'bool'
-
 # Capabilities of operations (simple and straightforward)
+from compilers.wabbit.model import Integer, Bool
+
 binary_ops = {
-    (INT, '+', INT): INT,
-    (INT, '-', INT): INT,
-    (INT, '<', INT): BOOL,
-    (INT, '>', INT): BOOL,
+    (Integer.name, '+', Integer.name): Integer.name,
+    (Integer.name, '-', Integer.name): Integer.name,
+    (Integer.name, '<', Integer.name): Bool.name,
+    (Integer.name, '>', Integer.name): Bool.name,
 }
+
+
+def check_binop(op, left_type, right_type):
+    """ Check if a binary operator is supported. Return result type or None if unsupported """
+    return binary_ops.get((left_type, op, right_type))
