@@ -18,16 +18,58 @@ type system later.
 '''
 
 # Capabilities of operations (simple and straightforward)
-from compilers.wabbit.model import Integer, Bool
+from compilers.wabbit.model import Integer, Bool, Float, Char
 
 binary_ops = {
-    (Integer.name, '+', Integer.name): Integer.name,
-    (Integer.name, '-', Integer.name): Integer.name,
-    (Integer.name, '<', Integer.name): Bool.name,
-    (Integer.name, '>', Integer.name): Bool.name,
+    (Integer.type, '+', Integer.type): Integer.type,
+    (Integer.type, '*', Integer.type): Integer.type,
+
+    (Integer.type, '-', Integer.type): Integer.type,
+    (Integer.type, '<', Integer.type): Bool.type,
+    (Integer.type, '>', Integer.type): Bool.type,
+
+    (Float.type, '*', Float.type): Float.type,
+    (Float.type, '+', Float.type): Float.type,
+    # TODO: *, /, and for floats, ...
+}
+
+unary_ops = {
+    # +operand (Positive)
+    # -operand (Negation)
+    # !operand (logical not)
+    # ^operand (Grow memory)
+    ('-', Integer.type): Integer.type,
+    ('^', Integer.type): Integer.type,
+    ('-', Float.type): Float.type,
+    ('!', Bool.type): Bool.type,
+
 }
 
 
-def check_binop(op, left_type, right_type):
+type_casts = {
+    # Casting to Integer:
+    (Float.type, Integer.type): Integer.type,
+    (Integer.type, Integer.type): Integer.type,
+
+    # Casting to Float
+    (Float.type, Float.type): Float.type,
+    (Integer.type, Float.type): Float.type,
+
+    # Casting to Bool
+    (Integer.type, Bool.type): Bool.type,
+    (Float.type, Bool.type): Bool.type,
+    (Char.type, Bool.type): Bool.type,
+    (Bool.type, Bool.type): Bool.type,
+}
+
+def check_binop(left_type, op, right_type):
     """ Check if a binary operator is supported. Return result type or None if unsupported """
     return binary_ops.get((left_type, op, right_type))
+
+
+def check_unop(operator, operand):
+    return unary_ops.get((operator, operand))
+
+
+def check_typecast(from_type, to_type):
+    return type_casts.get((from_type, to_type))

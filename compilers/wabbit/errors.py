@@ -8,3 +8,7 @@
 # place.  Make it easy to report errors.  Make it easy to find out
 # if errors have occurred.
 #
+
+
+def error(message):
+    print(message)

@@ -35,22 +35,26 @@
 # use basic Python class definitions.  You can add usability improvements
 # later.
 
-# ----------------------------------------------------------------------
+
+class Node:
+    """ Parent of Everything """
+    pass
+
+# -------------------
 # Part 1. Statements.
-#
-# Wabbit programs consist of statements.  Statements are related to
-# things like assignment, I/O (printing), control-flow, and other operations.
-#
+# -------------------
 
-# TODO: inherit from this so we can see what things are expressions and validate
-#  Statements,
-#  Expressions,
-#  Locations,
-#  Definitions
-import builtins
+class Statement(Node):
+    """
+    Part 1. Statements.
+
+    Wabbit programs consist of statements.  Statements are related to
+    things like assignment, I/O (printing), control-flow, and other operations.
+    """
+    pass
 
 
-class Assignment:
+class Assignment(Statement):
     """
     # 1.1 Assignment
     #     location = expression ;
@@ -66,7 +70,7 @@ class Assignment:
         return f'{self.location} = {self.expression};'
 
 
-class Print:
+class Print(Statement):
     """
     # 1.2 Printing
     #     print expression ;
@@ -78,7 +82,7 @@ class Print:
         return f'print {self.expression};'
 
 
-class If:
+class If(Statement):
     """
     # 1.3 Conditional
     #     if test { consequence} else { alternative }
@@ -94,7 +98,7 @@ class If:
         return f"if {self.test} {{\n  {consequences}\n}}{alternatives} "
 
 
-class While:
+class While(Statement):
     """
     # 1.4 While Loop
     #  while test { body }
@@ -108,7 +112,7 @@ class While:
         return f"while {self.test} {{\n  {consequences}\n}}"
 
 
-class Break:
+class Break(Statement):
     """
     # 1.5 Break and Continue
     #   while test {
@@ -119,12 +123,12 @@ class Break:
     pass
 
 
-class Continue:
+class Continue(Statement):
     """ DB has this, but I didn't think it would be necessary ... think further """
     pass
 
 
-class Return:
+class Return(Statement):
     """
     # 1.6 Return a value
     #  return expression ;
@@ -135,17 +139,23 @@ class Return:
     def __str__(self):
         return f"return {self.value};"
 
-# ----------------------------------------------------------------------
+# --------------------------------
 # Part 2. Definitions/Declarations
-#
-# Wabbit requires all variables and functions to be declared in 
-# advance.  All definitions have a name that identifies it.  These names
-# are defined within an environment that forms a so-called "scope."  
-# For example, global scope or local scope. 
-#
+# --------------------------------
+
+class Definition(Statement):
+    """
+    Part 2. Definitions/Declarations
+
+    Wabbit requires all variables and functions to be declared in
+    advance.  All definitions have a name that identifies it.  These names
+    are defined within an environment that forms a so-called "scope."
+    For example, global scope or local scope.
+    """
+    pass
 
 
-class Variable:
+class Variable(Definition):
     """
     # 2.1 Variables.  Variables can be declared in a few different forms.
     #    const name = value;
@@ -158,33 +168,35 @@ class Variable:
     def __init__(self, name, value=None, type=None):
         assert value or type
         assert type is None or type in KNOWN_TYPES
-        self._type_specified = type is not None
-        self._value_specified = value is not None
+        self.type_specified_when_declared = type is not None
+        self.value_specified_when_declared = value is not None
 
         self.name = name
         self.type = type
         self.value = value
+        self.mutable = True
 
     def __str__(self):
-        optional_type_fragment = f" {self.type}" if self._type_specified else ""
-        optional_value_fragment = f" = {self.value}" if self._value_specified else ""
+        optional_type_fragment = f" {self.type}" if self.type_specified_when_declared else ""
+        optional_value_fragment = f" = {self.value}" if self.value_specified_when_declared else ""
         return f"variable {self.name}{optional_type_fragment}{optional_value_fragment};"
 
 
-class Constant:
+class Constant(Definition):
     def __init__(self, name, value, type=None):
         assert type is None or type in KNOWN_TYPES
-        self._type_specified = type is not None
+        self.type_specified_when_declared = type is not None
         self.name = name
         self.type = type
         self.value = value
+        self.mutable = False
 
     def __str__(self):
-        optional_type_fragment = f" {self.type}" if self._type_specified else ""
+        optional_type_fragment = f" {self.type}" if self.type_specified_when_declared else ""
         return f"const {self.name}{optional_type_fragment} = {self.value};"
 
 
-class Function:
+class Function(Definition):
     """
     # 2.2 Function definitions.
     #    func name(parameters) return_type { statements }
@@ -207,7 +219,7 @@ class Function:
 }}"""
 
 
-class FunctionParameter:
+class FunctionParameter(Definition):
     """
     # 2.3 Function Parameters
     #
@@ -225,68 +237,83 @@ class FunctionParameter:
 
     def __str__(self):
         return f"{self.name} {self.type}"
-# ----------------------------------------------------------------------
-# Part 3: Expressions.
-#
-# Expressions represent things that evaluate to a concrete value.
-#
-# Wabbit defines the following expressions and operators
-#
-# 3.1 Literals
+
+# -------------------
+# Part 3: Expressions
+# -------------------
 
 
-#
-class Integer:
+class Expression(Node):
+    """
+    Part 3: Expressions.
+
+    Expressions represent things that evaluate to a concrete value.
+
+    Wabbit defines the following expressions and operators
+    """
+
+
+class Literal(Expression):
+    """
+    # 3.1 Literals
+
+    """
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return f"{self.value}"
+
+
+class Integer(Literal):
     """
     #        23            (Integer literal)
     """
-    name = 'int'
+    type = 'int'
 
     def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return f"{self.value}"
+        assert isinstance(value, int)
+        super().__init__(value)
 
 
-class Float:
+class Float(Literal):
     """
     #        4.5           (Float literal)
     """
-    name = 'float'
+    type = 'float'
 
     def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return f"{self.value}"
+        assert isinstance(value, float)
+        super().__init__(value)
 
 
-class Bool:
+
+class Bool(Literal):
     """
     #        true,false    (Bool literal)
     """
-    name = 'bool'
+    type = 'bool'
 
     def __init__(self, value):
         assert value in {'true', 'false'}
-        self.value = value
+        super().__init__(value)
 
 
-class Char:
+class Char(Literal):
     """
     #        'c'           (Character literal - A single character)
     """
-    name = 'char'
+    type = 'char'
 
     def __init__(self, value):
-        self.value = value
+        assert isinstance(value, str) and len(value) == 1
+        super().__init__(value)
 
 
-KNOWN_TYPES = {Integer.name, Float.name, Bool.name, Char.name}
+KNOWN_TYPES = {Integer.type, Float.type, Bool.type, Char.type}
 
 
-class BinaryOperator:
+class BinaryOperator(Expression):
     """
     # 3.2 Binary Operators
     #        left + right        (Addition)
@@ -311,7 +338,7 @@ class BinaryOperator:
         return f"{self.left} {self.operator} {self.right}"
 
 
-class UnaryOperator:
+class UnaryOperator(Expression):
     """
     # 3.3 Unary Operators
     #        +operand       (Positive)
@@ -327,7 +354,7 @@ class UnaryOperator:
         return f"{self.operator}{self.operand}"
 
 
-class Fetch:
+class Fetch(Expression):
     """
     # 3.4 Reading from a location  (see below)
     #        location
@@ -336,7 +363,7 @@ class Fetch:
         self.location = location
 
 
-class TypeCast:
+class TypeCast(Expression):
     """
     # 3.5 Type-casts
     #         int(expr)
@@ -351,7 +378,7 @@ class TypeCast:
         return f"{self.target_type}({self.value})"
 
 
-class FunctionCall:
+class FunctionCall(Expression):
     """
     # 3.6 Function/Procedure Call
     #        func(arg1, arg2, ..., argn)
@@ -363,32 +390,39 @@ class FunctionCall:
     def __str__(self):
         return f"{self.function_name}({' ,'.join([str(a) for a in self.args])})"
 
-# ----------------------------------------------------------------------
+# ------------------
 # Part 4 : Locations
-#
-# A location represents a place where a value is stored.  The tricky
-# thing about locations is that they are used in two different ways.
-# First, a location could appear on the left-hand-side of an assignment
-# like this:
-#
-#      location = expression;     // Stores a value into location
-#
-# However, a location could also appear as part of an expression:
-#
-#      print location + 10;       // Reads a value from location
-#
-# A location is not necessarily a simple variable name.  For example,
-# consider the following example in Python:
-#
-#       >>> a = [1,2,3,4]
-#       >>> a[2] = 10            # Store in location "a[2]"
-#       >>> print(a[2])          # Read from location "a[2]"
-#
-# Wabbit has two types of locations:
-#
+# ------------------
 
 
-class Primitive:
+class Location(Expression):
+    """
+    Part 4 : Locations
+
+    A location represents a place where a value is stored.  The tricky
+    thing about locations is that they are used in two different ways.
+    First, a location could appear on the left-hand-side of an assignment
+    like this:
+
+         location = expression;     // Stores a value into location
+
+    However, a location could also appear as part of an expression:
+
+         print location + 10;       // Reads a value from location
+
+    A location is not necessarily a simple variable name.  For example,
+    consider the following example in Python:
+
+          >>> a = [1,2,3,4]
+          >>> a[2] = 10            # Store in location "a[2]"
+          >>> print(a[2])          # Read from location "a[2]"
+
+    Wabbit has two types of locations:
+    """
+    pass
+
+
+class NamedLocation(Location):
     """
     # 4.1 Primitive.  A bare variable name such as "abc"
     #
@@ -407,7 +441,8 @@ class Primitive:
     def __str__(self):
         return self.name
 
-class MemoryAddress:
+
+class MemoryAddress(Location):
     """
     # 4.2 Memory Addresses. An integer prefixed by backtick (`)
     #

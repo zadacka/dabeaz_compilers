@@ -82,12 +82,12 @@ program1 = [
 
 program2 = [
     Constant('pi', 3.14159),
-    Variable('tau', None, Float.name),
+    Variable('tau', None, Float.type),
     Assignment(
-        Primitive('tau'),
-        BinaryOperator('*', Float(2.0), Primitive('pi'))
+        NamedLocation('tau'),
+        BinaryOperator('*', Float(2.0), NamedLocation('pi'))
     ),
-    Print(Primitive('tau'))
+    Print(NamedLocation('tau'))
 ]
 
 # ----------------------------------------------------------------------
@@ -104,12 +104,12 @@ program2 = [
 #
 
 program3 = [
-    Variable('a', Integer(2), Integer.name),
-    Variable('b', Integer(3), Integer.name),
+    Variable('a', Integer(2), Integer.type),
+    Variable('b', Integer(3), Integer.type),
     If(
-        BinaryOperator('<', Primitive('a'), Primitive('b')),
-        [Print(Primitive('a')), ],
-        [Print(Primitive('b')), ],
+        BinaryOperator('<', NamedLocation('a'), NamedLocation('b')),
+        [Print(NamedLocation('a')), ],
+        [Print(NamedLocation('b')), ],
     )
 ]
 
@@ -129,21 +129,21 @@ program3 = [
 
 program4 = [
     Constant('n', Integer(10)),
-    Variable('x', Integer(10), Integer.name),
-    Variable('fact', Integer(1), Integer.name),
+    Variable('x', Integer(10), Integer.type),
+    Variable('fact', Integer(1), Integer.type),
 
     While(
-        BinaryOperator('<', Primitive('x'), Primitive('n')),
+        BinaryOperator('<', NamedLocation('x'), NamedLocation('n')),
         [
-            Assignment(Primitive('fact'), BinaryOperator(
+            Assignment(NamedLocation('fact'), BinaryOperator(
                 '*',
-                Primitive('fact'),
-                Primitive('x')
+                NamedLocation('fact'),
+                NamedLocation('x')
             )),
-            Print(Primitive('fact')),
-            Assignment(Primitive('x'),
+            Print(NamedLocation('fact')),
+            Assignment(NamedLocation('x'),
                        BinaryOperator('+',
-                                      Primitive('x'),
+                                      NamedLocation('x'),
                                       Integer(1)
                                       )
                        )
@@ -164,9 +164,9 @@ program4 = [
 
 program5 = [
     Function('square',
-             [FunctionParameter('x', Integer.name)],
-             Integer.name,
-             [Return(BinaryOperator('*', Primitive('x'), Primitive('x'))), ]
+             [FunctionParameter('x', Integer.type)],
+             Integer.type,
+             [Return(BinaryOperator('*', NamedLocation('x'), NamedLocation('x'))), ]
              ),
     Print(FunctionCall('square', [4, ])),
     Print(FunctionCall('square', [10, ])),
@@ -189,19 +189,19 @@ program5 = [
 
 program6 = [
     Function('fact',
-             [FunctionParameter('n', Integer.name), ],
-             Integer.name,
+             [FunctionParameter('n', Integer.type), ],
+             Integer.type,
              [
-                 Variable('x', 1, Integer.name),
-                 Variable('result', 1, Integer.name),
+                 Variable('x', 1, Integer.type),
+                 Variable('result', 1, Integer.type),
                  While(
-                     BinaryOperator('<', Primitive('x'), Primitive('n')),
-                     [Assignment(Primitive('x'),
-                                BinaryOperator('+',
-                                               Primitive('x'),
-                                               Integer(1))), ]
+                     BinaryOperator('<', NamedLocation('x'), NamedLocation('n')),
+                     [Assignment(NamedLocation('x'),
+                                 BinaryOperator('+',
+                                                NamedLocation('x'),
+                                                Integer(1))), ]
                  ),
-                 Return(Primitive('result'))
+                 Return(NamedLocation('result'))
              ],
              ),
     Print(FunctionCall('fact', [Integer(10)]))
