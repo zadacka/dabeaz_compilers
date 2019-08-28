@@ -182,8 +182,32 @@ Modules
 =======
 The final output of code generation is IR Code for a whole collection
 of functions. To produce a final result, put all of the functions in 
-some kind of Module object. 
+some kind of Module object.
+
+GOAL is to take this:
+Print(
+    BinaryOperator(
+        '+',
+        Integer(2),
+        BinaryOperator(
+            '*',
+            Integer(3),
+            UnaryOperator('-', Integer(4))
+        )
+    )
+and produce this:
+[
+  CONST, 3
+  CONST, 2
+  SUBI,
+  CONST 2
+  MULI
+  PRINT
+]
+
+
 '''
+from compilers.wabbit.model import Print, Integer, BinaryOperator, Float, UnaryOperator
 
 
 class IRFunction:
@@ -208,3 +232,65 @@ class IRFunction:
 class IRModule:
     def __init__(self):
         self.functions = {}
+        self.code = []
+
+    def transpile(self, node):
+        if isinstance(node, list):
+            for item in node:
+                self.transpile(item)
+        elif isinstance(node, Print):
+            self.transpile_Print(node)
+        elif isinstance(node, Integer):
+            self.code.append(('CONSTI', node.value))
+        elif isinstance(node, Float):
+            self.code.append(('CONSTF', node.value))
+        elif isinstance(node, BinaryOperator):
+            self.transpile_BinaryOperator(node)
+        elif isinstance(node, UnaryOperator):
+            self.transpile_UnaryOperator(node)
+        else:
+            raise ValueError(f'Could not handle {node}, unknown type')
+
+    def transpile_Print(self, node):
+        self.transpile(node.expression)
+        if node.expression.type == Integer.type:
+            self.code.append(('PRINTI',))
+        elif node.expression.type == Float.type:
+            self.code.append(('PRINTF',))
+        else:
+            raise ValueError(f'Unhandled (un-print-able) type {node.expression.type}')
+
+    def transpile_UnaryOperator(self, node):
+        unaryOpMap = {
+            (Integer.type, '-'): [('CONSTI', 0), ('SUBI', )],
+            (Float.type,   '-'): [('CONSTF', 0), ('SUBF', )],
+        }
+        instructions = unaryOpMap.get((node.operand.type, node.operator))
+        self.code.append(instructions[0])
+        self.transpile(node.operand)
+        self.code.append(instructions[1])
+
+
+    def transpile_BinaryOperator(self, node):
+        binaryOpMap = {
+            (Integer.type, '+', Integer.type): 'ADDI',
+            (Integer.type, '-', Integer.type): 'SUBI',
+            (Integer.type, '*', Integer.type): 'MULI',
+            (Integer.type, '/', Integer.type): 'DIVI',
+
+            (Float.type,   '+', Float.type):   'SUMF',
+            (Float.type,   '-', Float.type):   'SUBF',
+            (Float.type,   '*', Float.type):   'MULF',
+            (Float.type,   '/', Float.type):   'DIVF',
+
+        }
+        self.transpile(node.left)
+        self.transpile(node.right)
+        opType = binaryOpMap.get((node.left.type, node.operator, node.right.type))
+        self.code.append((opType, ))
+
+
+def generate_ircode(code):
+    irmodule = IRModule()
+    irmodule.transpile(code)
+    return irmodule.code

@@ -23,27 +23,6 @@
 
 import struct
 
-code = [
-    ('GLOBALI', 'x'),
-    ('CONSTI', 4),
-    ('STORE', 'x'),
-    ('GLOBALI', 'y'),
-    ('CONSTI', 5),
-    ('STORE', 'y'),
-    ('GLOBALI', 'd'),
-    ('LOAD', 'x'),
-    ('LOAD', 'x'),
-    ('MULI',),
-    ('LOAD', 'y'),
-    ('LOAD', 'y'),
-    ('MULI',),
-    ('ADDI',),
-    ('STORE', 'd'),
-    ('LOAD', 'd'),
-    ('PRINTI',)
-]
-
-
 # Challenge: Compile to Wasm and load it in the browser
 # What if you had a tiny stack machine with a CPU and four datatypes
 
@@ -133,9 +112,17 @@ INSTRUCTION_GLOBAL_SET = b'\x24'
 INSTRUCTION_GLOBAL_GET = b'\x23'
 
 INSTRUCTION_i32_CONST = b'\x41'
+INSTRUCTION_f64_CONST = b'\x44'
 
-INSTRUCTION_i32_MUL = b'\x6c'
-INSTRUCTION_i32_ADD = b'\x6a'
+INSTRUCTION_i32_ADD = b'\x6A'
+INSTRUCTION_i32_SUB = b'\x6B'
+INSTRUCTION_i32_MUL = b'\x6C'
+INSTRUCTION_i32_DIV_SIGNED = b'\x6D'
+
+INSTRUCTION_f64_ADD = b'\xA0'
+INSTRUCTION_f64_SUB = b'\xA1'
+INSTRUCTION_f64_MUL = b'\xA2'
+INSTRUCTION_f64_DIV = b'\xA3'
 
 
 # wtype - WASM value types:
@@ -192,13 +179,29 @@ class WasmEncoder:
     def encode_CONSTI(self, value):
         self.wcode += INSTRUCTION_i32_CONST + encode_signed(value)
 
+    def encode_CONSTF(self, value):
+        self.wcode += INSTRUCTION_f64_CONST + encode_f64(value)
+
     def encode_ADDI(self):
         self.wcode += INSTRUCTION_i32_ADD  # i32.add
+
+    def encode_SUBI(self):
+        self.wcode += INSTRUCTION_i32_SUB
+
+    def encode_SUBF(self):
+        self.wcode += INSTRUCTION_f64_SUB
+
+    def encode_DIVF(self):
+        self.wcode += INSTRUCTION_f64_DIV
 
     def encode_MULI(self):
         self.wcode += INSTRUCTION_i32_MUL  # i32.mul
 
     def encode_PRINTI(self):
+        # TO-DO
+        pass
+
+    def encode_PRINTF(self):
         # TO-DO
         pass
 
@@ -226,7 +229,28 @@ class WasmEncoder:
         self.wcode += INSTRUCTION_GLOBAL_GET + encode_unsigned(index)
 
 
-encoder = WasmEncoder()
-encoder.encode_function("main", [], [], [i32], code)
-with open('out.wasm', 'wb') as file:
-    file.write(encoder.encode_module())
+if __name__ == '__main__':
+    code = [
+        ('GLOBALI', 'x'),
+        ('CONSTI', 4),
+        ('STORE', 'x'),
+        ('GLOBALI', 'y'),
+        ('CONSTI', 5),
+        ('STORE', 'y'),
+        ('GLOBALI', 'd'),
+        ('LOAD', 'x'),
+        ('LOAD', 'x'),
+        ('MULI',),
+        ('LOAD', 'y'),
+        ('LOAD', 'y'),
+        ('MULI',),
+        ('ADDI',),
+        ('STORE', 'd'),
+        ('LOAD', 'd'),
+        ('PRINTI',)
+    ]
+
+    encoder = WasmEncoder()
+    encoder.encode_function("main", [], [], [i32], code)
+    with open('out.wasm', 'wb') as file:
+        file.write(encoder.encode_module())
