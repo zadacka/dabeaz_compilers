@@ -29,7 +29,9 @@ binary_ops = {
     (Integer.type, '>', Integer.type): Bool.type,
 
     (Float.type, '*', Float.type): Float.type,
+    (Float.type, '/', Float.type): Float.type,
     (Float.type, '+', Float.type): Float.type,
+    (Float.type, '-', Float.type): Float.type,
     # TODO: *, /, and for floats, ...
 }
 
