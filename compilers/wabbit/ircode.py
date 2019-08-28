@@ -184,3 +184,27 @@ The final output of code generation is IR Code for a whole collection
 of functions. To produce a final result, put all of the functions in 
 some kind of Module object. 
 '''
+
+
+class IRFunction:
+    def __init__(self, name, parameters, return_type):
+        self.name = name
+        self.parameters = parameters
+        self.return_type = return_type
+        self.code = []  # list of IR instructions
+
+    def append(self, instr):
+        self.code.append(instr)
+
+# note that IR only has two types: int and float
+# func square(x int) int { return x * x }
+# square = IRFunction('square', [('x', 'I')], 'I')  # I is the IR code type - integer
+# square.append(('LOAD', 'x'))
+# square.append(('LOAD', 'x'))
+# square.append(('MUL',))
+# square.append(('RETURN',))
+
+
+class IRModule:
+    def __init__(self):
+        self.functions = {}
