@@ -213,8 +213,7 @@ class WasmEncoder:
         self.wcode += b'\x10' + encode_unsigned(self.functions['_printi'])
 
     def encode_PRINTF(self):
-        # TO-DO
-        pass
+        self.wcode += b'\x10' + encode_unsigned(self.functions['_printf'])
 
     def encode_LOCALI(self):
         # Create a local variable

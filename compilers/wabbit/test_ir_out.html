@@ -8,6 +8,7 @@
     var imports = {
        runtime : {
            _printi: (x) => { document.getElementById("myout").innerHTML += x + "\n"; },
+           _printf: (x) => { document.getElementById("myout").innerHTML += x + "\n"; },
        }
     };
     fetch("test_ir_out.wasm").then(response =>
