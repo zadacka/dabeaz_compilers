@@ -81,7 +81,7 @@ program1 = [
 #    print(tau);  # TODO: check if this should just be print (no brackets)
 
 program2 = [
-    Constant('pi', 3.14159),
+    Constant('pi', Float(3.14159)),
     Variable('tau', None, Float.type),
     Assignment(
         NamedLocation('tau'),
