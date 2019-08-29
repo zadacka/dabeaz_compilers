@@ -168,8 +168,8 @@ program5 = [
              Integer.type,
              [Return(BinaryOperator('*', NamedLocation('x'), NamedLocation('x'))), ]
              ),
-    Print(FunctionCall('square', [4, ])),
-    Print(FunctionCall('square', [10, ])),
+    Print(FunctionCall('square', [Integer(4), ])),
+    Print(FunctionCall('square', [Integer(10), ])),
 ]
 
 # ----------------------------------------------------------------------
@@ -192,8 +192,8 @@ program6 = [
              [FunctionParameter('n', Integer.type), ],
              Integer.type,
              [
-                 Variable('x', 1, Integer.type),
-                 Variable('result', 1, Integer.type),
+                 Variable('x', Integer(1), Integer.type),
+                 Variable('result', Integer(1), Integer.type),
                  While(
                      BinaryOperator('<', NamedLocation('x'), NamedLocation('n')),
                      [Assignment(NamedLocation('x'),
