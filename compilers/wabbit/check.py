@@ -236,7 +236,7 @@ def check_If(node, env):
 
 
 def check_While(node, env):
-    check(node.test)
+    check(node.test, env)
     if node.test.type != Bool.type:
         error('If test did not evaluate to a Boolean!')
     check(node.consequence, env.new_child())

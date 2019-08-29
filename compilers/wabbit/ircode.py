@@ -208,7 +208,7 @@ and produce this:
 
 '''
 from compilers.wabbit.model import Print, Integer, BinaryOperator, Float, UnaryOperator, Constant, Variable, Assignment, \
-    NamedLocation, If
+    NamedLocation, If, While
 
 
 class IRFunction:
@@ -261,6 +261,8 @@ class IRModule:
             self.transpile_LoadNamedLocation(node)
         elif isinstance(node, If):
             self.transpile_If(node)
+        elif isinstance(node, While):
+            self.transpile_While(node)
         else:
             raise ValueError(f"Could not handle '{node}', unknown type")
 
@@ -323,7 +325,6 @@ class IRModule:
     def transpile_StoreNamedLocation(self, node):
         self.code.append(('STORE', node.name))
 
-
     def transpile_Assignment(self, node):
         self.transpile(node.expression)
         self.transpile_StoreNamedLocation(node.location)
@@ -337,6 +338,15 @@ class IRModule:
             self.transpile(node.alternative)
         self.code.append(('ENDIF',))
 
+    def transpile_While(self, node):
+        self.code.append(('LOOP',))
+
+        self.code.append(('CONSTI', 1))  # Push 1
+        self.transpile(node.test)        # Evaluate the test
+        self.code.append(('SUBI', ))     # Do '1 - test value' to do a NOT operation on the test
+        self.code.append(('CBREAK', ))
+        self.transpile(node.consequence)
+        self.code.append(('ENDLOOP',))
 
 
 #         consequence
