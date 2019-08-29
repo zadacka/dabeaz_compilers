@@ -107,6 +107,11 @@ assert encode_signed(127) == bytes([0xff, 0x00])
 
 INSTRUCTION_NOOP = b'\x01'  # Check: may mean something else as a type?!
 
+INSTRUCTION_IF =     b'\x04'
+INSTRUCTION_ELSE =   b'\x05'
+INSTRUCTION_ENDIF =  b'\x0b'
+BLOCK_TYPE =         b'\x40'
+
 INSTRUCTION_END = b'\x0b'
 INSTRUCTION_GLOBAL_SET = b'\x24'
 INSTRUCTION_GLOBAL_GET = b'\x23'
@@ -118,6 +123,7 @@ INSTRUCTION_i32_ADD = b'\x6A'
 INSTRUCTION_i32_SUB = b'\x6B'
 INSTRUCTION_i32_MUL = b'\x6C'
 INSTRUCTION_i32_DIV_SIGNED = b'\x6D'
+INSTRUCTION_i32_LT_SIGNED = b'\x48'
 
 INSTRUCTION_f64_ADD = b'\xA0'
 INSTRUCTION_f64_SUB = b'\xA1'
@@ -208,6 +214,19 @@ class WasmEncoder:
 
     def encode_MULI(self):
         self._wcode.append(INSTRUCTION_i32_MUL)  # i32.mul
+
+    def encode_LTI(self):
+        self._wcode.append(INSTRUCTION_i32_LT_SIGNED)
+
+    def encode_IF(self):
+        self._wcode.append(INSTRUCTION_IF)
+        self._wcode.append(BLOCK_TYPE)
+
+    def encode_ELSE(self):
+        self._wcode.append(INSTRUCTION_ELSE)
+
+    def encode_ENDIF(self):
+        self._wcode.append(INSTRUCTION_ENDIF)
 
     def encode_MULF(self):
         self._wcode.append(INSTRUCTION_f64_MUL)  # i32.mul

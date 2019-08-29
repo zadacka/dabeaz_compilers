@@ -1,17 +1,19 @@
-from compilers.programs import Constant, Variable, Float, Assignment, NamedLocation, BinaryOperator, Print, program1
+from compilers.programs import Constant, Variable, Float, Assignment, NamedLocation, BinaryOperator, Print, program1, \
+    Integer, If
 from compilers.wabbit.check import check_program
 from compilers.wabbit.ircode import generate_ircode
 from compilers.wabbit.wasm import WasmEncoder, i32, f64
 
 program = [
-    Constant('pi', Float(3.14159)),
-    Variable('tau', None, Float.type),
-    Assignment(
-        NamedLocation('tau'),
-        BinaryOperator('*', Float(2.0), NamedLocation('pi'))
-    ),
-    Print(NamedLocation('tau'))
+    Variable('a', Integer(2), Integer.type),
+    Variable('b', Integer(3), Integer.type),
+    If(
+        BinaryOperator('<', NamedLocation('a'), NamedLocation('b')),
+        [Print(NamedLocation('a')), ],
+        [Print(NamedLocation('b')), ],
+    )
 ]
+
 check_program(program)  # side effect: fill in types (which we will need when generating IR code)
 ircode = generate_ircode(program)
 

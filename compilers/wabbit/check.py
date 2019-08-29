@@ -232,7 +232,7 @@ def check_If(node, env):
     if node.test.type != Bool.type:
         error('If test did not evaluate to a Boolean!')
     check(node.consequence, env.new_child())  # Make a new scope (from ChainMap)
-    check(node.alternative_consequence, env.new_child())
+    check(node.alternative, env.new_child())
 
 
 def check_While(node, env):

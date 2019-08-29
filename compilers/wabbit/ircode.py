@@ -208,7 +208,7 @@ and produce this:
 
 '''
 from compilers.wabbit.model import Print, Integer, BinaryOperator, Float, UnaryOperator, Constant, Variable, Assignment, \
-    NamedLocation
+    NamedLocation, If
 
 
 class IRFunction:
@@ -259,6 +259,8 @@ class IRModule:
             self.transpile_Assignment(node)
         elif isinstance(node, NamedLocation):
             self.transpile_LoadNamedLocation(node)
+        elif isinstance(node, If):
+            self.transpile_If(node)
         else:
             raise ValueError(f"Could not handle '{node}', unknown type")
 
@@ -288,6 +290,7 @@ class IRModule:
             (Integer.type, '-', Integer.type): 'SUBI',
             (Integer.type, '*', Integer.type): 'MULI',
             (Integer.type, '/', Integer.type): 'DIVI',
+            (Integer.type, '<', Integer.type): 'LTI',
 
             (Float.type,   '+', Float.type):   'SUMF',
             (Float.type,   '-', Float.type):   'SUBF',
@@ -298,6 +301,8 @@ class IRModule:
         self.transpile(node.left)
         self.transpile(node.right)
         opType = binaryOpMap.get((node.left.type, node.operator, node.right.type))
+        if opType is None:
+            raise ValueError(f'OpType not known for {node.left.type}{node.operator}{node.right.type}')
         self.code.append((opType, ))
 
     def transpile_ConstantOrVariable(self, node):
@@ -322,6 +327,20 @@ class IRModule:
     def transpile_Assignment(self, node):
         self.transpile(node.expression)
         self.transpile_StoreNamedLocation(node.location)
+
+    def transpile_If(self, node):
+        self.transpile(node.test)
+        self.code.append(('IF',))
+        self.transpile(node.consequence)
+        if node.alternative is not None:
+            self.code.append(('ELSE',))
+            self.transpile(node.alternative)
+        self.code.append(('ENDIF',))
+
+
+
+#         consequence
+# alternative
 
 
 def generate_ircode(code):
