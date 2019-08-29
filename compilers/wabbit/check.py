@@ -39,7 +39,7 @@ def check(node, env):
         assert not isinstance(node, Definition), 'Definitions should be checked separately'
         check_statement(node, env)
     else:
-        raise RuntimeError('f{node} not checked!')  # should always do this
+        raise RuntimeError(f'{node} not checked!')  # should always do this
 
 # Expression Checks
 # =================
@@ -147,13 +147,15 @@ def check_definition(node, env):
 
 
 def _checkVariableOrConst(node, env):
-    check(node.value, env)
-    if node.type_specified_when_declared:
-        if node.value.type != node.type:
-            error(f'Variable defined as type {node.type} does not match {node.value.type}')
-    else:
-        # infer type from value
-        node.type = node.value.type
+    if node.value is not None:
+        check(node.value, env)
+
+        if node.type_specified_when_declared:
+            if node.value.type != node.type:
+                error(f'Variable defined as type {node.type} does not match {node.value.type}')
+        else:
+            # infer type from value
+            node.type = node.value.type
 
     if node.name in env:
         error(f'Duplicate definition of {node.name}')
@@ -209,7 +211,7 @@ def check_statement(node, env):
 
 
 def check_Assignment(node, env):
-    check(node.locaiton, env)
+    check(node.location, env)
     check(node.expression, env)
 
     # What I expect
