@@ -89,7 +89,7 @@ def check_FunctionCall(node, env):
     check(node.args, env)
 
     # Check that the function is defined
-    func = env.get(node.name)
+    func = env.get(node.function_name)
     if func is None:
         error(f'Function {node.function_name} is not defined.')
 
