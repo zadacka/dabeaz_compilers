@@ -40,6 +40,11 @@ check_program(program)  # side effect: fill in types (which we will need when ge
 ircode = generate_ircode(program)
 
 encoder = WasmEncoder()
-encoder.encode_function("main", [], [], [i32], ircode)
+
+# Declare the runtime function
+encoder.import_function("runtime", "_printi", [i32], [])
+
+# Encode main(). Note: Return type changed to [].
+encoder.encode_function("main", [], [], [], ircode)
 with open('test_ir_out.wasm', 'wb') as file:
     file.write(encoder.encode_module())

@@ -20,8 +20,8 @@
 # encoder.  
 
 
-
 import struct
+
 
 # Challenge: Compile to Wasm and load it in the browser
 # What if you had a tiny stack machine with a CPU and four datatypes
@@ -133,6 +133,9 @@ f64 = b'\x7c'
 
 class WasmEncoder:
     def __init__(self):
+        # Imported Functions
+        self.imports = []
+
         # Globals
         self.globals = {}       # the names
         self.global_defns = []  # the reality / storage (a vector)
@@ -166,10 +169,19 @@ class WasmEncoder:
         encoded_size_of_fcode = encode_unsigned(len(fcode))
         self.func_code.append(encoded_size_of_fcode + fcode)
 
+    def import_function(self, module, name, parmtypes, rettypes):
+        assert not self.exports, "All imported functions must be declared first"
+        self.functions[name] = len(self.signatures)  # no -1 here?!
+        self.signatures.append(encode_signature(parmtypes, rettypes))
+        self.imports.append(
+            encode_name(module) + encode_name(name) + b'\x00' +
+            encode_unsigned(self.functions[name]))
+
     def encode_module(self):
         module = b'\x00asm\x01\x00\x00\x00'
         module += encode_section(1, encode_vector(self.signatures))
-        vec = [encode_unsigned(v) for v in self.functions.values()]
+        module += encode_section(2, encode_vector(self.imports))
+        vec = [encode_unsigned(v) for v in self.functions.values()][len(self.imports):]
         module += encode_section(3, encode_vector(vec))
         module += encode_section(6, encode_vector(self.global_defns))
         module += encode_section(7, encode_vector(self.exports))
@@ -198,8 +210,7 @@ class WasmEncoder:
         self.wcode += INSTRUCTION_i32_MUL  # i32.mul
 
     def encode_PRINTI(self):
-        # TO-DO
-        pass
+        self.wcode += b'\x10' + encode_unsigned(self.functions['_printi'])
 
     def encode_PRINTF(self):
         # TO-DO
