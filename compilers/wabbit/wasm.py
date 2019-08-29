@@ -127,8 +127,6 @@ INSTRUCTION_f64_DIV = b'\xA3'
 
 # wtype - WASM value types:
 i32 = b'\x7f'  # Wabbit uses 32 bit ints.
-i64 = b'\x7e'
-f32 = b'\x7d'
 f64 = b'\x7c'
 
 class WasmEncoder:
@@ -146,6 +144,12 @@ class WasmEncoder:
         self.func_code = []    # A vector of function code objects
         self.exports = []      # Functions for the outside world
 
+        self._wcode = []       # Wasm instruction code that we are generating
+
+    @property
+    def wcode(self):
+        return b''.join(self._wcode)
+
     def encode_function(self, name, parmnames, parmtypes, rettypes, code):
         sig = encode_signature(parmtypes, rettypes)
         self.signatures.append(sig)
@@ -158,14 +162,10 @@ class WasmEncoder:
         for n, pname in enumerate(parmnames):
             self.locals[pname] = n
 
-        self.wcode = b''  # Wasm instruction code that we are generating
         for op, *opargs in code:
             getattr(self, f'encode_{op}')(*opargs)
 
-        # Put a block terminator on the code
-        self.wcode += INSTRUCTION_END
-
-        fcode = encode_vector(self.local_defns) + self.wcode
+        fcode = encode_vector(self.local_defns) + self.wcode + INSTRUCTION_END
         encoded_size_of_fcode = encode_unsigned(len(fcode))
         self.func_code.append(encoded_size_of_fcode + fcode)
 
@@ -189,31 +189,34 @@ class WasmEncoder:
         return module
 
     def encode_CONSTI(self, value):
-        self.wcode += INSTRUCTION_i32_CONST + encode_signed(value)
+        self._wcode.append(INSTRUCTION_i32_CONST + encode_signed(value))
 
     def encode_CONSTF(self, value):
-        self.wcode += INSTRUCTION_f64_CONST + encode_f64(value)
+        self._wcode.append(INSTRUCTION_f64_CONST + encode_f64(value))
 
     def encode_ADDI(self):
-        self.wcode += INSTRUCTION_i32_ADD  # i32.add
+        self._wcode.append(INSTRUCTION_i32_ADD)  # i32.add
 
     def encode_SUBI(self):
-        self.wcode += INSTRUCTION_i32_SUB
+        self._wcode.append(INSTRUCTION_i32_SUB)
 
     def encode_SUBF(self):
-        self.wcode += INSTRUCTION_f64_SUB
+        self._wcode.append(INSTRUCTION_f64_SUB)
 
     def encode_DIVF(self):
-        self.wcode += INSTRUCTION_f64_DIV
+        self._wcode.append(INSTRUCTION_f64_DIV)
 
     def encode_MULI(self):
-        self.wcode += INSTRUCTION_i32_MUL  # i32.mul
+        self._wcode.append(INSTRUCTION_i32_MUL)  # i32.mul
+
+    def encode_MULF(self):
+        self._wcode.append(INSTRUCTION_f64_MUL)  # i32.mul
 
     def encode_PRINTI(self):
-        self.wcode += b'\x10' + encode_unsigned(self.functions['_printi'])
+        self._wcode.append(b'\x10' + encode_unsigned(self.functions['_printi']))
 
     def encode_PRINTF(self):
-        self.wcode += b'\x10' + encode_unsigned(self.functions['_printf'])
+        self._wcode.append(b'\x10' + encode_unsigned(self.functions['_printf']))
 
     def encode_LOCALI(self):
         # Create a local variable
@@ -230,13 +233,19 @@ class WasmEncoder:
         self.global_defns.append(defn)
         self.globals[name] = len(self.global_defns) - 1  # index of our global
 
+
+    def encode_GLOBALF(self, name):
+        defn = f64 + INSTRUCTION_NOOP + INSTRUCTION_f64_CONST + encode_f64(0) + INSTRUCTION_END
+        self.global_defns.append(defn)
+        self.globals[name] = len(self.global_defns) - 1  # index of our global
+
     def encode_STORE(self, name):
         index = self.globals[name]
-        self.wcode += INSTRUCTION_GLOBAL_SET + encode_unsigned(index)
+        self._wcode.append(INSTRUCTION_GLOBAL_SET + encode_unsigned(index))
 
     def encode_LOAD(self, name):
         index = self.globals[name]
-        self.wcode += INSTRUCTION_GLOBAL_GET + encode_unsigned(index)
+        self._wcode.append(INSTRUCTION_GLOBAL_GET + encode_unsigned(index))
 
 
 if __name__ == '__main__':

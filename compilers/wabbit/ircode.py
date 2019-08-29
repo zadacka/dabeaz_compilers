@@ -207,7 +207,8 @@ and produce this:
 
 
 '''
-from compilers.wabbit.model import Print, Integer, BinaryOperator, Float, UnaryOperator
+from compilers.wabbit.model import Print, Integer, BinaryOperator, Float, UnaryOperator, Constant, Variable, Assignment, \
+    NamedLocation
 
 
 class IRFunction:
@@ -234,6 +235,8 @@ class IRModule:
         self.functions = {}
         self.code = []
 
+        self.variable_map = {}
+
     def transpile(self, node):
         if isinstance(node, list):
             for item in node:
@@ -248,8 +251,16 @@ class IRModule:
             self.transpile_BinaryOperator(node)
         elif isinstance(node, UnaryOperator):
             self.transpile_UnaryOperator(node)
+        elif isinstance(node, Constant):
+            self.transpile_ConstantOrVariable(node)
+        elif isinstance(node, Variable):
+            self.transpile_ConstantOrVariable(node)
+        elif isinstance(node, Assignment):
+            self.transpile_Assignment(node)
+        elif isinstance(node, NamedLocation):
+            self.transpile_LoadNamedLocation(node)
         else:
-            raise ValueError(f'Could not handle {node}, unknown type')
+            raise ValueError(f"Could not handle '{node}', unknown type")
 
     def transpile_Print(self, node):
         self.transpile(node.expression)
@@ -288,6 +299,29 @@ class IRModule:
         self.transpile(node.right)
         opType = binaryOpMap.get((node.left.type, node.operator, node.right.type))
         self.code.append((opType, ))
+
+    def transpile_ConstantOrVariable(self, node):
+        if node.type == Float.type:
+            self.code.append(('GLOBALF', node.name))
+        elif node.type == Integer.type:
+            self.code.append(('GLOBALI', node.name))
+        else:
+            raise ValueError(f'Unhandled Const with type {node.type}')
+
+        if node.value:
+            self.transpile(node.value)
+            self.code.append(('STORE', node.name))
+
+    def transpile_LoadNamedLocation(self, node):
+        self.code.append(('LOAD', node.name))
+
+    def transpile_StoreNamedLocation(self, node):
+        self.code.append(('STORE', node.name))
+
+
+    def transpile_Assignment(self, node):
+        self.transpile(node.expression)
+        self.transpile_StoreNamedLocation(node.location)
 
 
 def generate_ircode(code):
