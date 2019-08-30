@@ -77,4 +77,171 @@
 #
 # literal <- INTEGER / FLOAT / CHAR / bool
 #
-# bool <- 'true' / 'false'
+# bool <- 'true' / 'false
+from compilers.wabbit.check import check_program
+from compilers.wabbit.errors import ParseError
+from compilers.wabbit.ircode import generate_ircode
+from compilers.wabbit.model import Assignment, Expression, BinaryOperator, Integer, Float, NamedLocation, Print, If, \
+    UnaryOperator
+from compilers.wabbit.tokenizer import tokenize
+
+# Special EOF token
+from compilers.wabbit.wasm import WasmEncoder, i32, f64
+
+
+class EOF:
+    type = 'EOF'
+    value = 'EOF'
+
+class Parser:
+    """
+    Predictive (i.e. peek) Recursive Descent (i.e. recursive calls) Parser
+    Also a LL1 Parser: Left to right, Left side first, 1 token ahead
+    """
+    def __init__(self, tokens):
+        self.tokens = tokens    # An iterator that produces a stream of tokens
+        self.next_token = None  # one token look-ahead
+
+    def peek(self, *possible):
+        # Look ahead at the next token and return it if the type matches one or more possibilities
+        # Does not consume the token
+        if self.next_token is None:
+            self.next_token = next(self.tokens, EOF)
+
+        if self.next_token.type in possible:
+            return self.next_token
+        else:
+            return None
+
+    def expect(self, *possible):
+        """ Like peek() but it also consumes the token. Think Pac-Man.  """
+        # Return it and consume it
+        tok = self.peek(*possible)
+        if tok:
+            self.next_token = None
+            return tok
+        else:
+            raise ParseError("Nope!")
+
+    # Grammar:
+    def parse_assignment(self):
+        """assignment := Name '= expr ';'"""
+        name = self.expect('NAME')
+        self.expect('ASSIGN')
+        expression = self.parse_expr()
+        self.expect('SEMI')
+        return Assignment(NamedLocation(name.value), expression)  # Data Model
+
+    def parse_expr(self):
+        """expr := term {'+' | '-' term }"""
+        term = self.parse_term()
+        while self.peek('PLUS', 'MINUS'):
+            op = self.expect('PLUS', 'MINUS')
+            right_term = self.parse_term()
+            term = BinaryOperator(op.value, term, right_term)
+        return term
+
+    def parse_term(self):
+        """term := factor { '*', | '/' factor}"""
+        term = self.parse_factor()
+        while self.peek('TIMES', 'DIVIDE'):
+            op = self.expect('TIMES', 'DIVIDE')
+            right_term = self.parse_term()
+            term = BinaryOperator(op.value, term, right_term)
+        return term
+
+    def parse_factor(self):
+        # factor: INTEGER | FLOAT
+        if self.peek('INT'):
+            # Tokens only have strings. The .value attribute is the matched text.
+            # You might have to to run it into a proper integer for the model
+            return Integer(int(self.expect('INT').value))
+        elif self.peek('FLOAT'):
+            return Float(float(self.expect('FLOAT').value))
+        elif self.peek('LPAREN'):
+            self.expect('LPAREN')
+            expression = self.parse_expr()
+            self.expect('RPAREN')
+            return expression
+        elif self.peek('MINUS', 'PLUS'):
+            op = self.expect('MINUS', 'PLUS')
+            expr = self.parse_expr()
+            return UnaryOperator(op.value, expr)
+        elif False:
+            # Named location stuff here
+            pass
+        else:
+            raise ParseError('Bad factor ... reached the end but nothing found')
+
+    # print expression ;
+    def parse_print(self):
+        self.expect('PRINT')
+        expr = self.parse_expr()
+        self.expect('SEMI')
+        return Print(expr)
+
+    # if test {consequences } else {alternative}
+    def parse_if(self):
+        self.expect('IF')
+        test = self.parse_expr
+        self.expect('LBRACE')
+        consequence = self.parse_statements()
+        self.expect('RBRACE')
+        if self.peek('ELSE'):
+            self.expect('ELSE')
+            self.expect('LBRACE')
+            alternative = self.parse_statements()
+            self.expect('RBRACE')
+        else:
+            alternative = []
+        return If(test, consequence, alternative)
+
+    def parse_statements(self):
+        statements = []
+        while self.peek('EOF') != EOF:
+            stmt = self.parse_statement()
+            if stmt:
+                statements.append(stmt)
+            else:
+                break
+        return statements
+
+    def parse_statement(self):
+        if self.peek('PRINT'):
+            return self.parse_print()
+        elif self.peek('IF'):
+            return self.parse_if()
+        # elif self.peek('WHILE'):
+        #     return self.parse_while()
+        # elif self.peek('VAR'):
+        #     return self.parse_var()
+        # elif self.peek('NAME'):
+        #     return self.parse_name()
+        else:
+            raise ParseError('Parse Statement Fail!!')
+
+if __name__ == '__main__':
+    source = """
+print 2 + 3 * -4;
+print 2.0 - 3.0 / -4.0;
+"""
+    tokens = tokenize(source)
+
+    print(list(tokenize(source)))
+    parser = Parser(tokens)
+    tokenized = parser.parse_statements()
+    tokens = list(tokenized)
+    check_program(tokens)
+    ircode = generate_ircode(tokens)
+    encoder = WasmEncoder()
+    # Declare the runtime function
+    encoder.import_function("runtime", "_printi", [i32], [])
+    encoder.import_function("runtime", "_printf", [f64], [])
+
+    # Encode main(). Note: Return type changed to [].
+    encoder.encode_function("main", [], [], [], ircode)
+    with open('test_ir_out.wasm', 'wb') as file:
+        file.write(encoder.encode_module())
+
+    for line in encoder._wcode:
+        print(line)

@@ -95,6 +95,7 @@ known_tokens = {
 }
 
 FLOAT_OR_INT_REGEX = re.compile(r"""
+            ^         # Start of pattern: don't swallow characters before number!
             \.*       # Floats may start with a decimal point
             [0-9]+    # Then any number of numeric characters
             \.*       # Then maybe a decmial point

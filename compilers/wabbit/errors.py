@@ -8,7 +8,8 @@
 # place.  Make it easy to report errors.  Make it easy to find out
 # if errors have occurred.
 #
-
+class ParseError(Exception):
+    pass
 
 def error(message):
     print(message)
