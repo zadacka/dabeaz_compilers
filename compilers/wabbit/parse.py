@@ -80,15 +80,14 @@
 # bool <- 'true' / 'false
 from time import sleep
 
-from compilers.wabbit.check import check_program, Variable, Constant, While
+from compilers.wabbit.check import Variable, Constant, While
 from compilers.wabbit.errors import ParseError
-from compilers.wabbit.ircode import generate_ircode
-from compilers.wabbit.model import Assignment, Expression, BinaryOperator, Integer, Float, NamedLocation, Print, If, \
+from compilers.wabbit.model import Assignment, BinaryOperator, Integer, Float, NamedLocation, Print, If, \
     UnaryOperator, KNOWN_TYPES
 from compilers.wabbit.tokenizer import tokenize
 
+
 # Special EOF token
-from compilers.wabbit.wasm import WasmEncoder, i32, f64
 
 
 class EOF:
@@ -259,38 +258,11 @@ class Parser:
 
 
 if __name__ == '__main__':
-    source = """
-    const n = 10;
-    var x int = 1;
-    var fact int = 1;
-    
-    while x < n {
-       fact = fact * x;
-       print fact;
-       x = x + 1;
-    }
-    """
-    print(source)
-    tokens = tokenize(source)
-
-    print(list(tokenize(source)))
+    print(list(tokenize("print 10;")))
+    tokens = tokenize("print 10;")
     sleep(0.1)
     parser = Parser(tokens)
     tokenized = parser.parse_statements()
-    tokens = list(tokenized)
-    print(tokens)
 
-    check_program(tokens)
-    ircode = generate_ircode(tokens)
-    encoder = WasmEncoder()
-    # Declare the runtime function
-    encoder.import_function("runtime", "_printi", [i32], [])
-    encoder.import_function("runtime", "_printf", [f64], [])
-
-    # Encode main(). Note: Return type changed to [].
-    encoder.encode_function("main", [], [], [], ircode)
-    with open('test_ir_out.wasm', 'wb') as file:
-        file.write(encoder.encode_module())
-
-    for line in encoder._wcode:
-        print(line)
+    for x in tokenized:
+        print(x)
