@@ -108,19 +108,23 @@ def tokenize(text):
     while index < len(text):
         # Produce a token
 
-        # Skip white space
-        if text[index] in ' \t\n':
-            index += 1
-            continue
-
         # Skip Comments
-        elif text[index:index + 2] == '/*':
+        if text[index:index + 2] == '/*':
             end = text.find('*/', index + 2)
             if end >= 0:
                 index = end + 2
             else:
                 print("Unterminated Comment")
                 index = len(text)
+
+        elif text[index:index + 2] == '//':
+            index_of_next_newline = text.find('\n', index)
+            index = len(text) if index_of_next_newline == -1 else index_of_next_newline
+
+        # Skip white space
+        elif text[index] in ' \t\n':
+            index += 1
+            continue
 
         # Get names and keywords
         elif re.match(r'[a-zA-Z][a-zA-Z0-9]*', text[index:]):
