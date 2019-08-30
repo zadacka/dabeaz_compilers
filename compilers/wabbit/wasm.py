@@ -127,13 +127,20 @@ INSTRUCTION_f64_CONST = b'\x44'
 INSTRUCTION_i32_ADD = b'\x6A'
 INSTRUCTION_i32_SUB = b'\x6B'
 INSTRUCTION_i32_MUL = b'\x6C'
+
 INSTRUCTION_i32_DIV_SIGNED = b'\x6D'
 INSTRUCTION_i32_LT_SIGNED = b'\x48'
+INSTRUCTION_i32_GT_SIGNED = b'\x4A'
 
 INSTRUCTION_f64_ADD = b'\xA0'
 INSTRUCTION_f64_SUB = b'\xA1'
 INSTRUCTION_f64_MUL = b'\xA2'
 INSTRUCTION_f64_DIV = b'\xA3'
+
+INSTRUCTION_f64_LT = b'\x63'
+INSTRUCTION_f64_GT = b'\x64'
+INSTRUCTION_f64_LE = b'\x65'
+INSTRUCTION_f64_GE = b'\x66'
 
 
 # wtype - WASM value types:
@@ -208,6 +215,9 @@ class WasmEncoder:
     def encode_ADDI(self):
         self._wcode.append(INSTRUCTION_i32_ADD)  # i32.add
 
+    def encode_ADDF(self):
+        self._wcode.append(INSTRUCTION_f64_ADD)  # i32.add
+
     def encode_SUBI(self):
         self._wcode.append(INSTRUCTION_i32_SUB)
 
@@ -226,11 +236,26 @@ class WasmEncoder:
     def encode_LTI(self):
         self._wcode.append(INSTRUCTION_i32_LT_SIGNED)
 
+    def encode_GTI(self):
+        self._wcode.append(INSTRUCTION_i32_GT_SIGNED)
+
+    def encode_GEF(self):
+        self._wcode.append(INSTRUCTION_f64_GE)
+
+    def encode_LTF(self):
+        self._wcode.append(INSTRUCTION_f64_LT)
+
+    def encode_GTF(self):
+        self._wcode.append(INSTRUCTION_f64_GT)
+
     def encode_MULF(self):
         self._wcode.append(INSTRUCTION_f64_MUL)  # i32.mul
 
     def encode_PRINTI(self):
         self._wcode.append(b'\x10' + encode_unsigned(self.functions['_printi']))
+
+    def encode_PRINTB(self):
+        self._wcode.append(b'\x10' + encode_unsigned(self.functions['_printb']))
 
     def encode_PRINTF(self):
         self._wcode.append(b'\x10' + encode_unsigned(self.functions['_printf']))

@@ -61,8 +61,8 @@ RESERVED_KEYWORDS = {
     'while': Token('WHILE', 'while'),
     'func': Token('FUNC', 'func'),
     'import': Token('IMPORT', 'import'),
-    'true': Token('TRUE', 'true'),
-    'false': Token('FALSE', 'false'),
+    'true': Token('BOOL', 'true'),
+    'false': Token('BOOL', 'false'),
 }
 
 known_tokens = {
@@ -121,14 +121,25 @@ def tokenize(text):
             index_of_next_newline = text.find('\n', index)
             index = len(text) if index_of_next_newline == -1 else index_of_next_newline
 
+        elif re.match("^'.*'", text[index:]):
+            match = re.match("'.*'", text[index:]).group(0)
+            if match == "'\\n'":
+                single_character = "\n"
+            elif len(match) == 3:
+                single_character = match[1]
+            else:
+                raise ValueError(f'Unsupported Char!! {match}')
+            yield Token('CHAR', single_character)
+            index += len(match)
+
         # Skip white space
         elif text[index] in ' \t\n':
             index += 1
             continue
 
         # Get names and keywords
-        elif re.match(r'[a-zA-Z][a-zA-Z0-9]*', text[index:]):
-            m = re.match(r'[a-zA-Z][a-zA-Z0-9]*', text[index:]).group(0)
+        elif re.match(r'[_a-zA-Z][_a-zA-Z0-9]*', text[index:]):
+            m = re.match(r'[_a-zA-Z][_a-zA-Z0-9]*', text[index:]).group(0)
             if m in RESERVED_KEYWORDS:
                 yield RESERVED_KEYWORDS[m]
             else:

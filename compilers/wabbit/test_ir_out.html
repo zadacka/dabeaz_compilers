@@ -9,6 +9,8 @@
        runtime : {
            _printi: (x) => { document.getElementById("myout").innerHTML += x + "\n"; },
            _printf: (x) => { document.getElementById("myout").innerHTML += x + "\n"; },
+           _printb: (x) => { document.getElementById("myout").innerHTML += String.fromCharCode(x); },
+
        }
     };
     fetch("test_ir_out.wasm").then(response =>

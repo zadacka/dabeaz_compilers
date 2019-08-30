@@ -208,7 +208,7 @@ and produce this:
 
 '''
 from compilers.wabbit.model import Print, Integer, BinaryOperator, Float, UnaryOperator, Constant, Variable, Assignment, \
-    NamedLocation, If, While
+    NamedLocation, If, While, Char, Bool
 
 
 class IRFunction:
@@ -247,6 +247,11 @@ class IRModule:
             self.code.append(('CONSTI', node.value))
         elif isinstance(node, Float):
             self.code.append(('CONSTF', node.value))
+        elif isinstance(node, Char):
+            self.code.append(('CONSTI', ord(node.value)))
+        elif isinstance(node, Bool):
+            value = 1 if node.value == 'true' else 0
+            self.code.append(('CONSTI', value))
         elif isinstance(node, BinaryOperator):
             self.transpile_BinaryOperator(node)
         elif isinstance(node, UnaryOperator):
@@ -272,6 +277,8 @@ class IRModule:
             self.code.append(('PRINTI',))
         elif node.expression.type == Float.type:
             self.code.append(('PRINTF',))
+        elif node.expression.type == Char.type:
+            self.code.append(('PRINTB',))
         else:
             raise ValueError(f'Unhandled (un-print-able) type {node.expression.type}')
 
@@ -293,16 +300,23 @@ class IRModule:
 
     def transpile_BinaryOperator(self, node):
         binaryOpMap = {
-            (Integer.type, '+', Integer.type): 'ADDI',
-            (Integer.type, '-', Integer.type): 'SUBI',
-            (Integer.type, '*', Integer.type): 'MULI',
-            (Integer.type, '/', Integer.type): 'DIVI',
-            (Integer.type, '<', Integer.type): 'LTI',
+            (Integer.type, '+', Integer.type):  'ADDI',
+            (Integer.type, '-', Integer.type):  'SUBI',
+            (Integer.type, '*', Integer.type):  'MULI',
+            (Integer.type, '/', Integer.type):  'DIVI',
+            (Integer.type, '<', Integer.type):  'LTI',
+            (Integer.type, '>', Integer.type):  'GTI',
+            (Integer.type, '<=', Integer.type): 'LEI',
+            (Integer.type, '>=', Integer.type): 'GEI',
 
-            (Float.type,   '+', Float.type):   'SUMF',
-            (Float.type,   '-', Float.type):   'SUBF',
-            (Float.type,   '*', Float.type):   'MULF',
-            (Float.type,   '/', Float.type):   'DIVF',
+            (Float.type,   '+', Float.type):    'ADDF',
+            (Float.type,   '-', Float.type):    'SUBF',
+            (Float.type,   '*', Float.type):    'MULF',
+            (Float.type,   '/', Float.type):    'DIVF',
+            (Float.type,   '<', Float.type):    'LTF',
+            (Float.type,   '>', Float.type):    'GTF',
+            (Float.type,   '<=', Float.type):   'LEF',
+            (Float.type,   '>=', Float.type):   'GEF',
 
         }
         self.transpile(node.left)
@@ -316,6 +330,10 @@ class IRModule:
         if node.type == Float.type:
             self.code.append(('GLOBALF', node.name))
         elif node.type == Integer.type:
+            self.code.append(('GLOBALI', node.name))
+        elif node.type == Char.type:
+            self.code.append(('GLOBALI', node.name))
+        elif node.type == Bool.type:
             self.code.append(('GLOBALI', node.name))
         else:
             raise ValueError(f'Unhandled Const with type {node.type}')

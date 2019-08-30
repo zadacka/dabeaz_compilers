@@ -80,7 +80,7 @@
 # bool <- 'true' / 'false
 from time import sleep
 
-from compilers.wabbit.check import Variable, Constant, While
+from compilers.wabbit.check import Variable, Constant, While, Char, Bool
 from compilers.wabbit.errors import ParseError
 from compilers.wabbit.model import Assignment, BinaryOperator, Integer, Float, NamedLocation, Print, If, \
     UnaryOperator, KNOWN_TYPES
@@ -136,8 +136,8 @@ class Parser:
     def parse_expr(self):
         """expr := term {'+' | '-' term }"""
         term = self.parse_term()
-        while self.peek('PLUS', 'MINUS', 'LT'):
-            op = self.expect('PLUS', 'MINUS', 'LT')
+        while self.peek('PLUS', 'MINUS', 'LT', 'GT', 'LE', 'GE'):
+            op = self.expect('PLUS', 'MINUS', 'LT', 'GT', 'LE', 'GE')
             right_term = self.parse_term()
             term = BinaryOperator(op.value, term, right_term)
         return term
@@ -159,6 +159,10 @@ class Parser:
             return Integer(int(self.expect('INT').value))
         elif self.peek('FLOAT'):
             return Float(float(self.expect('FLOAT').value))
+        elif self.peek('CHAR'):
+            return Char(str(self.expect('CHAR').value))
+        elif self.peek('BOOL'):
+            return Bool(self.expect('BOOL').value)
         elif self.peek('LPAREN'):
             self.expect('LPAREN')
             expression = self.parse_expr()
