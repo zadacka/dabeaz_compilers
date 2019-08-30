@@ -82,7 +82,7 @@ from compilers.wabbit.check import check_program
 from compilers.wabbit.errors import ParseError
 from compilers.wabbit.ircode import generate_ircode
 from compilers.wabbit.model import Assignment, Expression, BinaryOperator, Integer, Float, NamedLocation, Print, If, \
-    UnaryOperator
+    UnaryOperator, KNOWN_TYPES
 from compilers.wabbit.tokenizer import tokenize
 
 # Special EOF token
@@ -167,9 +167,9 @@ class Parser:
             op = self.expect('MINUS', 'PLUS')
             expr = self.parse_expr()
             return UnaryOperator(op.value, expr)
-        elif False:
-            # Named location stuff here
-            pass
+        elif self.peek('NAME'):
+            expr = self.expect('NAME')
+            return NamedLocation(expr.value)
         else:
             raise ParseError('Bad factor ... reached the end but nothing found')
 
@@ -206,6 +206,33 @@ class Parser:
                 break
         return statements
 
+    # var declaration: (var | const) name [type] [= expr] ;
+    def parse_var(self):
+        decl = self.expect('VAR', 'CONST').type
+        name = self.expect('NAME').value
+        if self.peek('NAME'):
+            type = self.parse_type()
+        else:
+            type = None
+        if self.peek('ASSIGN'):
+            self.expect('ASSIGN')
+            expr = self.parse_expr()
+        else:
+            expr = None
+        self.expect('SEMI')
+        if decl == 'VAR':
+            return Variable(name, expr, type)
+        else:
+            return Constant(name, expr, type)
+
+    # type declaration: (int | float | bool | char)
+    def parse_type(self):
+        tok = self.expect('NAME')
+        if tok.value in KNOWN_TYPES:
+            return tok.value
+        else:
+            raise ParseError(f'Expected a type when parsing {tok}')
+
     def parse_statement(self):
         if self.peek('PRINT'):
             return self.parse_print()
@@ -213,24 +240,30 @@ class Parser:
             return self.parse_if()
         # elif self.peek('WHILE'):
         #     return self.parse_while()
-        # elif self.peek('VAR'):
-        #     return self.parse_var()
-        # elif self.peek('NAME'):
-        #     return self.parse_name()
+        elif self.peek('CONST', 'VAR'):
+            return self.parse_var()
+        elif self.peek('NAME'):
+            return self.parse_assignment()
         else:
-            raise ParseError('Parse Statement Fail!!')
+            raise ParseError(f'parse_statement failed to handle {self.next_token}')
+
 
 if __name__ == '__main__':
     source = """
-print 2 + 3 * -4;
-print 2.0 - 3.0 / -4.0;
-"""
+        const pi = 3.14159;
+        var tau float;
+        tau = 2.0 * pi;
+        print(tau);
+    """
+    print(source)
     tokens = tokenize(source)
 
     print(list(tokenize(source)))
     parser = Parser(tokens)
     tokenized = parser.parse_statements()
     tokens = list(tokenized)
+    print(tokens)
+
     check_program(tokens)
     ircode = generate_ircode(tokens)
     encoder = WasmEncoder()
