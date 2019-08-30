@@ -121,7 +121,7 @@ class Parser:
             self.next_token = None
             return tok
         else:
-            raise ParseError("Nope!")
+            raise ParseError(f"Nope! Looking for {possible} but next token is {next(self.tokens)}")
 
     # Grammar:
     def parse_assignment(self):
@@ -135,8 +135,8 @@ class Parser:
     def parse_expr(self):
         """expr := term {'+' | '-' term }"""
         term = self.parse_term()
-        while self.peek('PLUS', 'MINUS'):
-            op = self.expect('PLUS', 'MINUS')
+        while self.peek('PLUS', 'MINUS', 'LT'):
+            op = self.expect('PLUS', 'MINUS', 'LT')
             right_term = self.parse_term()
             term = BinaryOperator(op.value, term, right_term)
         return term
@@ -183,7 +183,7 @@ class Parser:
     # if test {consequences } else {alternative}
     def parse_if(self):
         self.expect('IF')
-        test = self.parse_expr
+        test = self.parse_expr()
         self.expect('LBRACE')
         consequence = self.parse_statements()
         self.expect('RBRACE')
@@ -198,7 +198,7 @@ class Parser:
 
     def parse_statements(self):
         statements = []
-        while self.peek('EOF') != EOF:
+        while not self.peek('EOF', 'RBRACE'):
             stmt = self.parse_statement()
             if stmt:
                 statements.append(stmt)
@@ -250,10 +250,13 @@ class Parser:
 
 if __name__ == '__main__':
     source = """
-        const pi = 3.14159;
-        var tau float;
-        tau = 2.0 * pi;
-        print(tau);
+        var a int = 2;
+        var b int = 3;
+        if a < b {
+            print a;
+        } else {
+            print b;
+        }
     """
     print(source)
     tokens = tokenize(source)
