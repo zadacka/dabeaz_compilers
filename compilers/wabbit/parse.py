@@ -78,7 +78,9 @@
 # literal <- INTEGER / FLOAT / CHAR / bool
 #
 # bool <- 'true' / 'false
-from compilers.wabbit.check import check_program
+from time import sleep
+
+from compilers.wabbit.check import check_program, Variable, Constant, While
 from compilers.wabbit.errors import ParseError
 from compilers.wabbit.ircode import generate_ircode
 from compilers.wabbit.model import Assignment, Expression, BinaryOperator, Integer, Float, NamedLocation, Print, If, \
@@ -238,8 +240,8 @@ class Parser:
             return self.parse_print()
         elif self.peek('IF'):
             return self.parse_if()
-        # elif self.peek('WHILE'):
-        #     return self.parse_while()
+        elif self.peek('WHILE'):
+            return self.parse_while()
         elif self.peek('CONST', 'VAR'):
             return self.parse_var()
         elif self.peek('NAME'):
@@ -247,21 +249,32 @@ class Parser:
         else:
             raise ParseError(f'parse_statement failed to handle {self.next_token}')
 
+    def parse_while(self):
+        self.expect('WHILE')
+        test = self.parse_expr()
+        self.expect('LBRACE')
+        consequence = self.parse_statements()
+        self.expect('RBRACE')
+        return While(test, consequence)
+
 
 if __name__ == '__main__':
     source = """
-        var a int = 2;
-        var b int = 3;
-        if a < b {
-            print a;
-        } else {
-            print b;
-        }
+    const n = 10;
+    var x int = 1;
+    var fact int = 1;
+    
+    while x < n {
+       fact = fact * x;
+       print fact;
+       x = x + 1;
+    }
     """
     print(source)
     tokens = tokenize(source)
 
     print(list(tokenize(source)))
+    sleep(0.1)
     parser = Parser(tokens)
     tokenized = parser.parse_statements()
     tokens = list(tokenized)
