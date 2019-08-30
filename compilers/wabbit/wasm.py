@@ -220,6 +220,9 @@ class WasmEncoder:
     def encode_MULI(self):
         self._wcode.append(INSTRUCTION_i32_MUL)  # i32.mul
 
+    def encode_DIVI(self):
+        self._wcode.append(INSTRUCTION_i32_DIV_SIGNED)
+
     def encode_LTI(self):
         self._wcode.append(INSTRUCTION_i32_LT_SIGNED)
 

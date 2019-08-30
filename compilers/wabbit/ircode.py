@@ -280,10 +280,15 @@ class IRModule:
             (Integer.type, '-'): [('CONSTI', 0), ('SUBI', )],
             (Float.type,   '-'): [('CONSTF', 0), ('SUBF', )],
         }
-        instructions = unaryOpMap.get((node.operand.type, node.operator))
-        self.code.append(instructions[0])
-        self.transpile(node.operand)
-        self.code.append(instructions[1])
+        if node.operator == '-':
+            instructions = unaryOpMap.get((node.operand.type, node.operator))
+            self.code.append(instructions[0])
+            self.transpile(node.operand)
+            self.code.append(instructions[1])
+        elif node.operator == '+':
+            self.transpile(node.operand)
+        else:
+            raise ValueError(f'Operator {node.operator} not supported yet')
 
 
     def transpile_BinaryOperator(self, node):

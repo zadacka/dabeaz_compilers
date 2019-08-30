@@ -74,6 +74,7 @@ def check_BinaryOperator(node, env):
 
 
 def check_UnaryOperator(node, env):
+    check(node.operand, env)
     node.type = check_unop(node.operator, node.operand.type)
     if node.type is None:
         error(f'Invalid unary operation: {node.operator}{node.operand}')

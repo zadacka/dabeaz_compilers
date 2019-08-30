@@ -25,6 +25,7 @@ binary_ops = {
     (Integer.type, '*', Integer.type): Integer.type,
 
     (Integer.type, '-', Integer.type): Integer.type,
+    (Integer.type, '/', Integer.type): Integer.type,
     (Integer.type, '<', Integer.type): Bool.type,
     (Integer.type, '>', Integer.type): Bool.type,
 
@@ -41,8 +42,10 @@ unary_ops = {
     # !operand (logical not)
     # ^operand (Grow memory)
     ('-', Integer.type): Integer.type,
+    ('+', Integer.type): Integer.type,
     ('^', Integer.type): Integer.type,
     ('-', Float.type): Float.type,
+    ('+', Float.type): Float.type,
     ('!', Bool.type): Bool.type,
 
 }
